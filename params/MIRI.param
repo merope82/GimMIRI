@@ -1,0 +1,59 @@
+################################################################################
+#                       Input parameter file for GimMIRI                       #
+#                                Version 1.40                                  #
+#                                    2019                                      #
+#                                                                              #
+# This file contains the running parameters for the program GimMIRI. If there  #
+# are any errors, please email the author of the program. Feel free to make    # 
+# comments in this parameter file, by starting lines with the '#' sign. Empty  #
+# rows are ignored. To ensure correct execution, do not modify the order of    #
+# the parameters. The example file uses a WebbPSF fits file, but any file may  #
+# be used. The central part of the image will be cropped.                      #
+#                                                                              #
+# Andras Gaspar                                                                #
+# Steward Observatory, University of Arizona                                   #
+# email: agaspar@as.arizona.edu                                                #
+# phone: 1-(520)-626-9898                                                      #
+#                                                                              #
+################################################################################
+# Verbose? (yes/no)
+no
+
+# Method? (fits/airy/disk)
+# If "fits" an optional lambda (mu) and oversampling rate can be given after
+# the filename, if not included in fits header (as in WebbPSF).
+# Default: 5.6 mu and 1.0. E.g.: fits image.fits 5.6 1.0
+# If "airy", the Diameter (m) of the telescope, instrument pixelscale and obs
+# wavelength (mu) should be given. Default is JWST/MIRI at 5.6 mu, 
+# e.g.: airy 6.5 0.11 5.6
+# If "disk", the pinhole radius (mu) and observation wavelength (mu) should be
+# given. Default if 25 mu radius pin at 5.6 microns. E.g.: disk 25.0 5.6.
+
+fits PSFlib/PSF_MIRI_56_os1.fits[0]
+# disk 50.0 5.5
+# airy
+
+# Offset in x and y coordinates in microns
+# The program, with zero offsets, places the input image at the center 
+# (where there is a cross gap). To model the detector image when the input is 
+# off-center from a the cross-gap, offsets can be given. The result will be
+# periodic with the pixel-size, so offsets larger than 0.5*pxsize are not
+# meaningful, but can be given. The initial axial angles are defined in the
+# code header and can be modified. If non-zero angles are compiled, the code
+# calculates and places the image in the cross-gap as a starting point.
+
+0.0 0.0
+
+# First output, writout multiplying factor, and output limit
+# GPUs are fast; first output should not be smaller than 1e11
+
+1e12 1.1 1e17
+
+# Out file name stub. WARNING: program overwrites existing files.
+
+MIRI
+
+# CUDA device numbers to use
+# If you only have a single GPU this should be "0", however, the
+# code can run on multiple GPUs.
+0 1

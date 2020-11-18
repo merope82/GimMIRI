@@ -1,0 +1,192 @@
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <curand.h>
+#include <curand_kernel.h>
+#include "imMIRI.h"
+#include "GimMIRI.cuh"
+#include "externC.h"
+
+void evolve(input *psf_d,flux *img_d,flux img_h,globalstruct **rglobal,const char *Version){
+    configdata	*cfg	= &cconfig;
+    long	j	= 0;
+    long	Nwrite	= cfg->Nstart;
+
+    int		 tpb	 = 128;
+    int		 *chunk	 = (int *)malloc(sizeof(int)*cfg->ndev);
+    int		 *blocks = (int *)malloc(sizeof(int)*cfg->ndev);
+    globalstruct *global = *rglobal;
+
+// Set thread-per-block and block count numbers per device
+// Scaled to core count and by cycles variable
+    for ( int i=0 ; i<cfg->ndev ; i++ ){
+	chunk[i]	= cycles*cfg->cores[i]*cfg->MPcount[i];
+	blocks[i]	= (chunk[i]-1.0)/tpb+1.0;
+    }
+
+// Init curand_states
+// By initiating once per device and storing values, the code is much faster
+    printinitheader(cfg->ndev);
+    for ( int i=0 ; i<cfg->ndev ; i++ ){
+        global[i].states = NULL;
+	gpuErrchk(cudaSetDevice(cfg->devs[i]));
+        gpuErrchk(cudaMalloc(&global[i].states,sizeof(curandState_t)*chunk[i]));
+	int offset = 0;
+	int d=0;
+	while ( d<i ){ offset+=chunk[d]; d++; }
+        init_curand<<<blocks[i],tpb>>>(chunk[i],global[i].states,2.0,offset);
+    }
+    for ( int i=0 ; i<cfg->ndev ; i++ ){
+	gpuErrchk(cudaSetDevice(cfg->devs[i]));
+	cudaError err = cudaGetLastError();
+	if ( cudaSuccess != err ){
+		print_warning(20);
+		fprintf(stderr,"CUDA kernel execution error on device %d: %s\n",i,cudaGetErrorString(err));
+		exit(-1);
+	}
+	gpuErrchk(cudaDeviceSynchronize());
+	printinitcuda(cfg->devs[i]);
+    }
+
+    do{
+	do{
+	    for ( int i=0 ; i<cfg->ndev ; i++ ){
+		gpuErrchk(cudaSetDevice(cfg->devs[i]));
+        	evolve_photons<<<blocks[i],tpb>>>(chunk[i],global[i].states,img_d[i].phi_x,img_d[i].phi_y,img_d[i].N,
+		    psf_d[i].x,psf_d[i].y,psf_d[i].F);
+		j += (long)chunk[i];
+    	    }
+	    for ( int i=0 ; i<cfg->ndev ; i++ ){
+		gpuErrchk(cudaSetDevice(cfg->devs[i]));
+		cudaError err = cudaGetLastError();
+		if ( cudaSuccess != err ){
+		    print_warning(20);
+		    fprintf(stderr,"CUDA kernel execution error on device %d: %s\n",i,cudaGetErrorString(err));
+		    exit(-1);
+		}
+		gpuErrchk(cudaDeviceSynchronize());
+	    }
+	    printstat(j);
+	}while(j<Nwrite);
+
+    unsigned long long ull=0;
+    cudaMemcpyFromSymbol(&ull,zm4,sizeof(unsigned long long));
+    printf("ZM4 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,zm3,sizeof(unsigned long long));
+    printf("ZM3 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,zm2,sizeof(unsigned long long));
+    printf("ZM2 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,zm1,sizeof(unsigned long long));
+    printf("ZM1 %llu Ntot: %ld\n",ull,j);
+
+    cudaMemcpyFromSymbol(&ull,path1,sizeof(unsigned long long));
+    printf("Path1 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path2,sizeof(unsigned long long));
+    printf("Path2 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path3,sizeof(unsigned long long));
+    printf("Path3 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path4,sizeof(unsigned long long));
+    printf("Path4 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path5,sizeof(unsigned long long));
+    printf("Path5 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path6,sizeof(unsigned long long));
+    printf("Path6 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path7,sizeof(unsigned long long));
+    printf("Path7 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path8,sizeof(unsigned long long));
+    printf("Path8 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path9,sizeof(unsigned long long));
+    printf("Path9 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path10,sizeof(unsigned long long));
+    printf("Path10 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path11,sizeof(unsigned long long));
+    printf("Path11 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path12,sizeof(unsigned long long));
+    printf("Path12 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path13,sizeof(unsigned long long));
+    printf("Path13 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path14,sizeof(unsigned long long));
+    printf("Path14 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path15,sizeof(unsigned long long));
+    printf("Path15 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path16,sizeof(unsigned long long));
+    printf("Path16 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path17,sizeof(unsigned long long));
+    printf("Path17 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path18,sizeof(unsigned long long));
+    printf("Path18 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path19,sizeof(unsigned long long));
+    printf("Path19 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path20,sizeof(unsigned long long));
+    printf("Path20 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path21,sizeof(unsigned long long));
+    printf("Path21 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path22,sizeof(unsigned long long));
+    printf("Path22 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path23,sizeof(unsigned long long));
+    printf("Path23 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path24,sizeof(unsigned long long));
+    printf("Path24 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path25,sizeof(unsigned long long));
+    printf("Path25 %llu Ntot: %ld\n",ull,j);
+
+    cudaMemcpyFromSymbol(&ull,path26,sizeof(unsigned long long));
+    printf("Path26 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path27,sizeof(unsigned long long));
+    printf("Path27 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path28,sizeof(unsigned long long));
+    printf("Path28 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path29,sizeof(unsigned long long));
+    printf("Path29 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path30,sizeof(unsigned long long));
+    printf("Path30 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path31,sizeof(unsigned long long));
+    printf("Path31 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path32,sizeof(unsigned long long));
+    printf("Path32 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path33,sizeof(unsigned long long));
+    printf("Path33 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path34,sizeof(unsigned long long));
+    printf("Path34 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path35,sizeof(unsigned long long));
+    printf("Path35 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path36,sizeof(unsigned long long));
+    printf("Path36 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path37,sizeof(unsigned long long));
+    printf("Path37 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path38,sizeof(unsigned long long));
+    printf("Path38 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path39,sizeof(unsigned long long));
+    printf("Path39 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path40,sizeof(unsigned long long));
+    printf("Path40 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path41,sizeof(unsigned long long));
+    printf("Path41 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path42,sizeof(unsigned long long));
+    printf("Path42 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path43,sizeof(unsigned long long));
+    printf("Path43 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path44,sizeof(unsigned long long));
+    printf("Path44 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path45,sizeof(unsigned long long));
+    printf("Path45 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path46,sizeof(unsigned long long));
+    printf("Path46 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path47,sizeof(unsigned long long));
+    printf("Path47 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path48,sizeof(unsigned long long));
+    printf("Path48 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path49,sizeof(unsigned long long));
+    printf("Path49 %llu Ntot: %ld\n",ull,j);
+    cudaMemcpyFromSymbol(&ull,path50,sizeof(unsigned long long));
+    printf("Path50 %llu Ntot: %ld\n\n",ull,j);
+    fflush(stdout);
+
+    Nwrite = (long)(cfg->Nmult*Nwrite);
+    readbackfromdevices(img_h,img_d);
+    write_fits(img_h,j,Version);
+    }while ( j <= cfg->Nlast );
+
+    *rglobal = global;
+}
+                                                                             

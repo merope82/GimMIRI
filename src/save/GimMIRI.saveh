@@ -1,0 +1,107 @@
+#ifndef __GIMMIRI_CUH__
+#define __GIMMIRI_CUH__
+
+typedef struct{
+    curandState_t *states;
+}globalstruct;
+
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess)
+   {
+      fprintf(stderr,"GPUassert error: %s\nin code: %s\nline: %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
+
+__device__ float getairyR(float);
+__global__ void  evolve_photons(int,curandState_t *,float *,float *,unsigned long long *,int *,\
+                               int *,double *);
+__global__ void  init_curand(int,curandState_t *,unsigned int,int);
+
+void   evolve(input *,flux *,flux,globalstruct **,const char *);
+void   freeall(flux,flux *,input,input *,globalstruct *);
+
+extern __constant__ int method;
+extern __constant__ int nx1;
+extern __constant__ int nx2;
+extern __constant__ int nx1multnx2;
+extern __constant__ int subp;
+extern __constant__ int sizex;
+extern __constant__ int sizey;
+extern __constant__ int szxmultszy;
+extern __constant__ float oamp;
+extern __constant__ float rad;
+extern __constant__ float alpha;
+extern __constant__ float Kap;
+extern __constant__ float Trans;
+extern __constant__ float lam;
+extern __constant__ float pxsc;
+extern __constant__ float Dap;
+extern __constant__ float nx1over2;
+extern __constant__ float nx2over2;
+extern __constant__ float pxoverosamp;
+extern __constant__ float pxoversubp;
+extern __constant__ float szxover2;
+extern __constant__ float szyover2;
+extern __constant__ float xoff;
+extern __constant__ float yoff;
+
+extern __device__ unsigned long long zm4;
+extern __device__ unsigned long long zm3;
+extern __device__ unsigned long long zm2;
+extern __device__ unsigned long long zm1;
+extern __device__ unsigned long long path1;
+extern __device__ unsigned long long path2;
+extern __device__ unsigned long long path3;
+extern __device__ unsigned long long path4;
+extern __device__ unsigned long long path5;
+extern __device__ unsigned long long path6;
+extern __device__ unsigned long long path7;
+extern __device__ unsigned long long path8;
+extern __device__ unsigned long long path9;
+extern __device__ unsigned long long path10;
+extern __device__ unsigned long long path11;
+extern __device__ unsigned long long path12;
+extern __device__ unsigned long long path13;
+extern __device__ unsigned long long path14;
+extern __device__ unsigned long long path15;
+extern __device__ unsigned long long path16;
+extern __device__ unsigned long long path17;
+extern __device__ unsigned long long path18;
+extern __device__ unsigned long long path19;
+extern __device__ unsigned long long path20;
+extern __device__ unsigned long long path21;
+extern __device__ unsigned long long path22;
+extern __device__ unsigned long long path23;
+extern __device__ unsigned long long path24;
+extern __device__ unsigned long long path25;
+extern __device__ unsigned long long path26;
+extern __device__ unsigned long long path27;
+extern __device__ unsigned long long path28;
+extern __device__ unsigned long long path29;
+extern __device__ unsigned long long path30;
+extern __device__ unsigned long long path31;
+extern __device__ unsigned long long path32;
+extern __device__ unsigned long long path33;
+extern __device__ unsigned long long path34;
+extern __device__ unsigned long long path35;
+extern __device__ unsigned long long path36;
+extern __device__ unsigned long long path37;
+extern __device__ unsigned long long path38;
+extern __device__ unsigned long long path39;
+extern __device__ unsigned long long path40;
+extern __device__ unsigned long long path41;
+extern __device__ unsigned long long path42;
+extern __device__ unsigned long long path43;
+extern __device__ unsigned long long path44;
+extern __device__ unsigned long long path45;
+extern __device__ unsigned long long path46;
+extern __device__ unsigned long long path47;
+extern __device__ unsigned long long path48;
+extern __device__ unsigned long long path49;
+extern __device__ unsigned long long path50;
+
+#endif
+                      
